@@ -1,0 +1,9 @@
+"0","# aggregate data into summary tables"
+"0","print(""building summary tables..."")"
+"1","[1]"
+"1"," ""building summary tables..."""
+"1","
+"
+"0","totalFatalities <- aggregate(df$FATALITIES, list(factor(df$EVTYPE)), sum)"
+"2","Error in df$FATALITIES : object of type 'closure' is not subsettable
+"

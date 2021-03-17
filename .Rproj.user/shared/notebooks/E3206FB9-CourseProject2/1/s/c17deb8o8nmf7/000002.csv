@@ -1,0 +1,5 @@
+"0","# filter out minor events to compare fatalities + injuries per event"
+"0","majorEvents <- df[df$InjuriesPlusFatalities>200,]"
+"0","boxplot(InjuriesPlusFatalities ~ EVTYPE, data=majorEvents,"
+"0","        horizontal=TRUE, main=""Harm caused per event"","
+"0","        ylab=""event type"", xlab=""total harm (injuries+fatalities)"")"

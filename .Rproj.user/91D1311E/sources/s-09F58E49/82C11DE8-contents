@@ -1,0 +1,104 @@
+---
+title: 'Reproducible Research Course Project2: Harm and damage caused by major weather
+  events'
+output:
+  html_document:
+    df_print: paged
+---
+* Synopsis:
+Major weather events cause both harm to individuals and damage to property. National Weather Service data from 1950 to 2011 was analyzed to determine which event types caused the most damage.  
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+## Data Processing:
+Raw National Weather Service data from 1950 to 2011 is pulled from repdata_data_StormData.csv.bz2.
+
+Property damage values were in various units, so the PROPDMG data column was translated into a new column PropertyDamageFiltered' with units of dollars.  only "K", "M", and "B" units were recognized, a small fraction of unkown units were filtered out of the data.
+
+Harm is calculated by adding up both injury and fatality counts per event.  This data is mostly zeros with a right skew.  I attempted to log transform the data but this did not help normalize the data, so I resorted to just using sum counts for analysis of greatest harm.  When comparing harm between different event types I filtered out all minor event.
+
+Property damage data can be normalized fairly well with a log transformation.
+```{r}
+# function to standardize property damage values with common units.
+propDamageFiltered <- function(val, exp) {
+    returnVal <- val  # default
+    if (exp=="K") {
+        returnVal <- val * 1000
+    }
+    else if (exp =="M" | exp =="m") {
+        returnVal <- val * 1000000
+    }
+    else if (exp == "B") {
+        returnVal <- val * 1000000000
+    }
+    returnVal
+}
+# 1. Code for reading in the dataset and/or processing the data
+library(utils)
+# read in data
+# 10. Does the analysis start from the raw data file (i.e. the original .csv.bz2 file)?
+print("reading in raw data...")
+df <- read.csv(".\\repdata_data_StormData.csv.bz2", na.strings = NA)
+print("done reading in raw data.")
+
+# transform data
+df$InjuriesPlusFatalities <- df$FATALITIES + df$INJURIES
+df$logInjuriesPlusFatalities <- log(df$InjuriesPlusFatalities + 1)
+df$logFatalities <- log(df$FATALITIES + 1)
+df$logInjuries <- log(df$INJURIES + 1)
+df$propDamageFiltered <- propDamageFiltered(df$PROPDMG, df$PROPDMGEXP)
+df$logPropDamageFiltered <- log(df$propDamageFiltered)
+```
+
+'Harm' in this report refers to the aggregate of "INJURIES" and "FATALITIES".  To assess greatest 'HARM' the raw data was aggregated for each event type into summary tables.
+```{r}
+# aggregate data into summary tables
+print("building summary tables...")
+totalFatalities <- aggregate(df$FATALITIES, list(factor(df$EVTYPE)), sum)
+names(totalFatalities) <- c("EVTYPE", "FATALITIES")
+totalFatalities <- totalFatalities[totalFatalities$FATALITIES >0,]
+totalFatalities$logFatalities <- log(totalFatalities$FATALITIES + 1)
+
+totalInjuries <- aggregate(df$INJURIES, list(factor(df$EVTYPE)), sum)
+names(totalInjuries) <- c("EVTYPE", "INJURIES")
+totalInjuries <- totalInjuries[totalInjuries$INJURIES>0,]
+totalInjuries$logInjuries <- log(totalInjuries$INJURIES + 1)
+
+totalInjuriesPlusFatalities <- aggregate(df$InjuriesPlusFatalities, list(factor(df$EVTYPE)), sum)
+names(totalInjuriesPlusFatalities) <- c("EVTYPE", "InjuriesPlusFatalities")
+totalInjuriesPlusFatalities <- totalInjuriesPlusFatalities[totalInjuriesPlusFatalities$InjuriesPlusFatalities>0,]
+totalInjuriesPlusFatalities$logInjuriesPlusFatalities <- log(totalInjuriesPlusFatalities$InjuriesPlusFatalities + 1)
+
+totalPropertyDamage <- aggregate(df$propDamageFiltered,
+                                 list(factor(df$EVTYPE)), sum)
+names(totalPropertyDamage) <- c("EVTYPE", "totalPropDamage")
+totalPropertyDamage <- totalPropertyDamage[totalPropertyDamage$totalPropDamage>0,]
+totalPropertyDamage$logTotalPropDamage <- log(totalPropertyDamage$totalPropDamage + 1)
+print("done building summary tables.")
+```
+
+A pareto chart of "Injuries+fatalities vs. event type shows excessive heat, by far, causes the most harm.  Only event types with more than 1000 injuries + fatalities are shown in the pareto chart below.
+```{r}
+# pareto of total fatalities+injuries by EVTYPE
+par(mfrow=c(1,1), mar=c(4,10,2,1), cex.axis=0.6, las=2)
+paretoTotal <- totalInjuriesPlusFatalities[totalInjuriesPlusFatalities$InjuriesPlusFatalities>1000,]
+pareto.chart(paretoTotal$InjuriesPlusFatalities, ylim=c(0,100000),
+             xlab="EVTYPE", ylab="total injuries+fatalities",
+             main="total injuries+fatalities by event type",
+             names.arg=paretoTotal$EVTYPE)
+```
+To compare the amount of harm per event, first I filtered out any minor events that had less than 200 injuries+fatalities reported, then plotted a boxplot, which shows that ice storms have the highest average harm inflicted, but the event counts appear to be low.  The highest harm on any one event appears to be from one Tornado.
+```{r}
+# filter out minor events to compare fatalities + injuries per event
+majorEvents <- df[df$InjuriesPlusFatalities>200,]
+boxplot(InjuriesPlusFatalities ~ EVTYPE, data=majorEvents,
+        horizontal=TRUE, main="Harm caused per event",
+        ylab="event type", xlab="total harm (injuries+fatalities)")
+```
+
+Property Damage
+```{r}
+
+```
+

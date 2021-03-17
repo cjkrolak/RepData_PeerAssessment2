@@ -1,0 +1,26 @@
+{
+    "id": "413BE5E4",
+    "path": "~/R/RepData_PeerAssessment2/pa1.R",
+    "project_path": "pa1.R",
+    "type": "r_source",
+    "hash": "3269451828",
+    "contents": "",
+    "dirty": false,
+    "created": 1615746520368.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "111,67",
+        "scrollLine": "100"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1616012859,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1616012859594,
+    "read_only": false,
+    "read_only_alternatives": []
+}
